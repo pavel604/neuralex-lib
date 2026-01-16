@@ -1,0 +1,44 @@
+name: Publish npm Package
+
+on:
+  push:
+    tags:
+      - 'npm-v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        registry-url: 'https://registry.npmjs.org'
+    
+    - name: Install dependencies
+      working-directory: ./npm
+      run: npm ci
+    
+    - name: Build package
+      working-directory: ./npm
+      run: npm run build
+    
+    - name: Publish to npm
+      working-directory: ./npm
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      run: npm publish
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: npm Client ${{ github.ref_name }}
+        body: |
+          npm package release for NeuraLex client library.
+          
+          Install: `npm install neuralex`
+        files: |
+          npm/dist/*
