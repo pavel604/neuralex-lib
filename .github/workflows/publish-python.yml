@@ -5,6 +5,9 @@ on:
     tags:
       - 'python-v*'
 
+permissions:
+  contents: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
