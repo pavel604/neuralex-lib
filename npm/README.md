@@ -2,6 +2,21 @@
 
 Official TypeScript/JavaScript client library for the [NeuraLex](https://neuralex.ca) API.
 
+## What is NeuraLex?
+
+NeuraLex is a next-generation embedding API that combines **semantic understanding** with **term-based precision** to deliver superior search and retrieval performance. Unlike traditional embedding models that rely solely on neural networks, NeuraLex uses a hybrid approach that preserves exact keyword matching while capturing semantic meaning.
+
+This hybrid architecture delivers:
+- ✅ **Better recall** - Captures both exact terms and semantic meaning
+- ✅ **Reduced false positives (disambiguation)** - Term-based component filters irrelevant semantic matches
+- ✅ **Configurable precision** - Adjust the balance for your use case
+
+### Learn More
+
+- 📄 [NeuraSearch Whitepaper](https://neuralex.ca/neurasearch-whitepaper) - Technical deep dive into the hybrid approach
+- 📊 [Performance Analysis](https://neuralex.ca/neurasearch-analysis) - Benchmark results and comparisons
+- 📖 [API Documentation](https://neuralex.ca/docs/api) - Complete API reference
+
 ## Installation
 
 ```bash
