@@ -2,7 +2,7 @@
 Example usage of the NeuraLex Python client library.
 """
 
-from neuralex import NeuraLexClient, AsyncNeuraLexClient
+from neuralex import NeuraLexClient, AsyncNeuraLexClient, EmbeddingInputData
 import asyncio
 
 
@@ -41,6 +41,31 @@ def batch_example():
             print(f"\nText {i + 1}: {item.text}")
             print(f"Dimensions: {len(item.embedding)}")
             print(f"Tokens: {item.usage.total_tokens}")
+
+
+def byoe_example():
+    """Bring Your Own Embedding (BYOE) mode example.
+
+    When the embed service has BYOE=true, you can provide your own
+    pre-computed embeddings instead of generating them server-side.
+    """
+    print("\n=== BYOE Example ===")
+
+    with NeuraLexClient(api_key="nlx_your_api_key") as client:
+        # Simulate a pre-computed embedding (1024 dimensions)
+        precomputed_embedding = [0.1] * 1024
+
+        # Create input with your own embedding
+        inputs = [
+            EmbeddingInputData(text="hello world", embedding=precomputed_embedding),
+            EmbeddingInputData(text="no embedding provided"),  # Will use server-side embedding
+        ]
+
+        response = client.embed(inputs)
+
+        for item in response.payload:
+            print(f"Text: {item.text}")
+            print(f"Embedding dimensions: {len(item.embedding)}")
 
 
 def semantic_weight_example():

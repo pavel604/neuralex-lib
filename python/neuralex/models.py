@@ -1,16 +1,26 @@
 """Data models for NeuraLex API requests and responses."""
 
-from typing import List, Optional
+from typing import List, Optional, Union
 from pydantic import BaseModel, Field
+
+
+class EmbeddingInputData(BaseModel):
+    """Input data for embedding generation - text is required, embedding is optional."""
+
+    text: str = Field(..., description="Text to embed (required)")
+    embedding: Optional[List[float]] = Field(
+        default=None,
+        description="Pre-computed embedding vector (optional, for BYOE mode)",
+    )
 
 
 class EmbeddingRequest(BaseModel):
     """Request model for embedding generation."""
 
-    inputs: List[str] = Field(
+    inputs: List[EmbeddingInputData] = Field(
         min_length=1,
         max_length=100,
-        description="List of texts to embed (max 100)",
+        description="List of embedding inputs (max 100)",
     )
     model: Optional[str] = Field(
         default="public",

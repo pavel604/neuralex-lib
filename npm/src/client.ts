@@ -4,6 +4,7 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import type {
+  EmbeddingInputData,
   EmbeddingRequest,
   EmbeddingResponse,
   NeuraLexClientConfig,
@@ -15,6 +16,34 @@ import {
   RateLimitError,
   APIError,
 } from './errors';
+
+/**
+ * Input type for the embed method - can be a string, EmbeddingInputData, or arrays of either
+ */
+type EmbedInput = string | EmbeddingInputData | string[] | EmbeddingInputData[];
+
+/**
+ * Normalize various input formats to EmbeddingInputData[]
+ */
+function normalizeInputs(inputs: EmbedInput): EmbeddingInputData[] {
+  // Handle single string
+  if (typeof inputs === 'string') {
+    return [{ text: inputs }];
+  }
+
+  // Handle single EmbeddingInputData
+  if (!Array.isArray(inputs)) {
+    return [inputs];
+  }
+
+  // Handle array
+  return inputs.map((item) => {
+    if (typeof item === 'string') {
+      return { text: item };
+    }
+    return item;
+  });
+}
 
 /**
  * Client for interacting with the NeuraLex Embedding API
@@ -64,7 +93,9 @@ export class NeuraLexClient {
   /**
    * Generate embeddings for the provided input text(s)
    *
-   * @param inputs - Text string or array of text strings to embed (max 100)
+   * @param inputs - Text string, EmbeddingInputData, or array of either (max 100).
+   *                 For BYOE (Bring Your Own Embedding) mode, use EmbeddingInputData
+   *                 with the embedding field populated.
    * @param options - Optional parameters
    * @param options.model - Model name (default: "public")
    * @param options.language - Language for lexeme extraction (default: "english")
@@ -89,30 +120,36 @@ export class NeuraLexClient {
    *   semanticWeight: 0.8,
    *   model: 'public'
    * });
+   *
+   * // BYOE mode with pre-computed embeddings
+   * const response = await client.embed([
+   *   { text: 'hello world', embedding: new Array(1024).fill(0.1) },
+   *   { text: 'server-computed text' }
+   * ]);
    * ```
    */
   async embed(
-    inputs: string | string[],
+    inputs: EmbedInput,
     options: {
       model?: string;
       language?: string;
       semanticWeight?: number;
     } = {}
   ): Promise<EmbeddingResponse> {
-    // Normalize inputs to array
-    const inputArray = Array.isArray(inputs) ? inputs : [inputs];
+    // Normalize inputs to EmbeddingInputData[]
+    const normalizedInputs = normalizeInputs(inputs);
 
     // Validate inputs
-    if (inputArray.length === 0) {
+    if (normalizedInputs.length === 0) {
       throw new Error('At least one input is required');
     }
-    if (inputArray.length > 100) {
+    if (normalizedInputs.length > 100) {
       throw new Error('Maximum 100 inputs allowed per request');
     }
 
     // Create request payload
     const request: EmbeddingRequest = {
-      inputs: inputArray,
+      inputs: normalizedInputs,
       model: options.model ?? 'public',
       language: options.language ?? 'english',
       semanticWeight: options.semanticWeight ?? 0.5,

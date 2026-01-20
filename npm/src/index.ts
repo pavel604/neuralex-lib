@@ -5,6 +5,7 @@
 
 export { NeuraLexClient } from './client';
 export type {
+  EmbeddingInputData,
   EmbeddingRequest,
   EmbeddingResponse,
   EmbeddingData,

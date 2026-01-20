@@ -2,8 +2,52 @@
 
 import httpx
 from typing import List, Optional, Union
-from .models import EmbeddingRequest, EmbeddingResponse
+from .models import EmbeddingInputData, EmbeddingRequest, EmbeddingResponse
 from .exceptions import AuthenticationError, RateLimitError, APIError, NeuraLexError
+
+
+# Type alias for flexible input types
+InputType = Union[str, EmbeddingInputData, List[str], List[EmbeddingInputData]]
+
+
+def _normalize_inputs(inputs: InputType) -> List[EmbeddingInputData]:
+    """Convert various input formats to List[EmbeddingInputData].
+
+    Args:
+        inputs: Can be a single string, single EmbeddingInputData,
+                list of strings, or list of EmbeddingInputData
+
+    Returns:
+        List of EmbeddingInputData objects
+    """
+    # Handle single string
+    if isinstance(inputs, str):
+        return [EmbeddingInputData(text=inputs)]
+
+    # Handle single EmbeddingInputData
+    if isinstance(inputs, EmbeddingInputData):
+        return [inputs]
+
+    # Handle list
+    if isinstance(inputs, list):
+        if not inputs:
+            raise ValueError("At least one input is required")
+
+        result = []
+        for item in inputs:
+            if isinstance(item, str):
+                result.append(EmbeddingInputData(text=item))
+            elif isinstance(item, EmbeddingInputData):
+                result.append(item)
+            else:
+                raise TypeError(
+                    f"Input must be str or EmbeddingInputData, got {type(item).__name__}"
+                )
+        return result
+
+    raise TypeError(
+        f"inputs must be str, EmbeddingInputData, or list thereof, got {type(inputs).__name__}"
+    )
 
 
 class NeuraLexClient:
@@ -57,7 +101,7 @@ class NeuraLexClient:
 
     def embed(
         self,
-        inputs: Union[str, List[str]],
+        inputs: InputType,
         model: Optional[str] = "public",
         language: str = "english",
         semantic_weight: float = 0.5,
@@ -65,7 +109,9 @@ class NeuraLexClient:
         """Generate embeddings for the provided input text(s).
 
         Args:
-            inputs: Text string or list of text strings to embed (max 100)
+            inputs: Text string, EmbeddingInputData, or list of either (max 100).
+                    For BYOE (Bring Your Own Embedding) mode, use EmbeddingInputData
+                    with the embedding field populated.
             model: Model name (default: "public")
             language: Language for lexeme extraction (default: "english")
             semantic_weight: Balance between term-based (0.0) and semantic (1.0)
@@ -80,24 +126,27 @@ class NeuraLexClient:
             NeuraLexError: Other errors
 
         Example:
+            >>> # Simple text embedding
             >>> response = client.embed("Hello, world!")
             >>> embedding = response.payload[0].embedding
             >>> print(f"Dimensions: {len(embedding)}")
             Dimensions: 1024
+
+            >>> # BYOE mode with pre-computed embeddings
+            >>> from neuralex import EmbeddingInputData
+            >>> inputs = [EmbeddingInputData(text="hello", embedding=[0.1] * 1024)]
+            >>> response = client.embed(inputs)
         """
-        # Normalize inputs to list
-        if isinstance(inputs, str):
-            inputs = [inputs]
+        # Normalize inputs to List[EmbeddingInputData]
+        normalized_inputs = _normalize_inputs(inputs)
 
         # Validate inputs
-        if not inputs:
-            raise ValueError("At least one input is required")
-        if len(inputs) > 100:
+        if len(normalized_inputs) > 100:
             raise ValueError("Maximum 100 inputs allowed per request")
 
         # Create request
         request = EmbeddingRequest(
-            inputs=inputs,
+            inputs=normalized_inputs,
             model=model,
             language=language,
             semantic_weight=semantic_weight,
@@ -185,7 +234,7 @@ class AsyncNeuraLexClient:
 
     async def embed(
         self,
-        inputs: Union[str, List[str]],
+        inputs: InputType,
         model: Optional[str] = "public",
         language: str = "english",
         semantic_weight: float = 0.5,
@@ -193,7 +242,9 @@ class AsyncNeuraLexClient:
         """Generate embeddings for the provided input text(s).
 
         Args:
-            inputs: Text string or list of text strings to embed (max 100)
+            inputs: Text string, EmbeddingInputData, or list of either (max 100).
+                    For BYOE (Bring Your Own Embedding) mode, use EmbeddingInputData
+                    with the embedding field populated.
             model: Model name (default: "public")
             language: Language for lexeme extraction (default: "english")
             semantic_weight: Balance between term-based (0.0) and semantic (1.0)
@@ -208,24 +259,27 @@ class AsyncNeuraLexClient:
             NeuraLexError: Other errors
 
         Example:
+            >>> # Simple text embedding
             >>> response = await client.embed("Hello, world!")
             >>> embedding = response.payload[0].embedding
             >>> print(f"Dimensions: {len(embedding)}")
             Dimensions: 1024
+
+            >>> # BYOE mode with pre-computed embeddings
+            >>> from neuralex import EmbeddingInputData
+            >>> inputs = [EmbeddingInputData(text="hello", embedding=[0.1] * 1024)]
+            >>> response = await client.embed(inputs)
         """
-        # Normalize inputs to list
-        if isinstance(inputs, str):
-            inputs = [inputs]
+        # Normalize inputs to List[EmbeddingInputData]
+        normalized_inputs = _normalize_inputs(inputs)
 
         # Validate inputs
-        if not inputs:
-            raise ValueError("At least one input is required")
-        if len(inputs) > 100:
+        if len(normalized_inputs) > 100:
             raise ValueError("Maximum 100 inputs allowed per request")
 
         # Create request
         request = EmbeddingRequest(
-            inputs=inputs,
+            inputs=normalized_inputs,
             model=model,
             language=language,
             semantic_weight=semantic_weight,

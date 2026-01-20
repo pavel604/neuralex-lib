@@ -2,8 +2,18 @@
  * Type definitions for NeuraLex API
  */
 
+/**
+ * Input data for embedding generation - text is required, embedding is optional
+ */
+export interface EmbeddingInputData {
+  /** Text to embed (required) */
+  text: string;
+  /** Pre-computed embedding vector (optional, for BYOE mode) */
+  embedding?: number[];
+}
+
 export interface EmbeddingRequest {
-  inputs: string[];
+  inputs: EmbeddingInputData[];
   model?: string;
   language?: string;
   semanticWeight?: number;

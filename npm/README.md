@@ -54,6 +54,7 @@ console.log(`First 5 values: ${embedding.slice(0, 5)}`);
 - ✅ Configurable semantic/term-based balance
 - ✅ Batch embedding support (up to 100 inputs)
 - ✅ Tree-shakeable ESM and CommonJS builds
+- ✅ BYOE (Bring Your Own Embedding) mode support
 
 ## Usage
 
@@ -106,6 +107,30 @@ const response = await client.embed('Python programming', {
   semanticWeight: 0.8
 });
 ```
+
+### BYOE (Bring Your Own Embedding) Mode
+
+When the embed service is configured with `BYOE=true`, you can provide your own
+pre-computed embeddings instead of generating them server-side:
+
+```typescript
+import { NeuraLexClient, EmbeddingInputData } from 'neuralex';
+
+const client = new NeuraLexClient({ apiKey: 'nlx_your_api_key' });
+
+// Create inputs with optional pre-computed embeddings
+const inputs: EmbeddingInputData[] = [
+  // Provide your own embedding (must match server dimensions, typically 1024)
+  { text: 'hello world', embedding: new Array(1024).fill(0.1) },
+  // Or let the server compute the embedding
+  { text: 'server-computed text' },
+];
+
+const response = await client.embed(inputs);
+```
+
+**Note:** BYOE mode must be enabled on the server (`BYOE=true`). If BYOE is disabled,
+providing embeddings will result in an error.
 
 ### Error Handling
 
@@ -175,7 +200,7 @@ Generate embeddings for text input(s).
 
 **Parameters:**
 
-- `inputs` (string | string[]): Text or array of texts to embed (max 100)
+- `inputs` (string | EmbeddingInputData | string[] | EmbeddingInputData[]): Text or array of texts/EmbeddingInputData to embed (max 100)
 - `options` (object, optional):
   - `model` (string): Model name (default: "public")
   - `language` (string): Language for lexeme extraction (default: "english")
@@ -184,6 +209,17 @@ Generate embeddings for text input(s).
 **Returns:** `Promise<EmbeddingResponse>`
 
 ### Types
+
+#### `EmbeddingInputData`
+
+```typescript
+interface EmbeddingInputData {
+  /** Text to embed (required) */
+  text: string;
+  /** Pre-computed embedding vector (optional, for BYOE mode) */
+  embedding?: number[];
+}
+```
 
 #### `EmbeddingResponse`
 

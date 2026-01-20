@@ -33,6 +33,7 @@ print(f"First 5 values: {embedding[:5]}")
 - ✅ Automatic error handling
 - ✅ Configurable semantic/term-based balance
 - ✅ Batch embedding support (up to 100 inputs)
+- ✅ BYOE (Bring Your Own Embedding) mode support
 
 ## Usage
 
@@ -110,6 +111,30 @@ async def main():
 asyncio.run(main())
 ```
 
+### BYOE (Bring Your Own Embedding) Mode
+
+When the embed service is configured with `BYOE=true`, you can provide your own
+pre-computed embeddings instead of generating them server-side:
+
+```python
+from neuralex import NeuraLexClient, EmbeddingInputData
+
+client = NeuraLexClient(api_key="nlx_your_api_key")
+
+# Create inputs with optional pre-computed embeddings
+inputs = [
+    # Provide your own embedding (must match server dimensions, typically 1024)
+    EmbeddingInputData(text="hello world", embedding=[0.1] * 1024),
+    # Or let the server compute the embedding
+    EmbeddingInputData(text="server-computed text"),
+]
+
+response = client.embed(inputs)
+```
+
+**Note:** BYOE mode must be enabled on the server (`BYOE=true`). If BYOE is disabled,
+providing embeddings will result in an error.
+
 ## Error Handling
 
 ```python
@@ -141,7 +166,7 @@ Main client class for synchronous API calls.
 
 **Parameters:**
 
-- `inputs` (str | List[str]): Text or list of texts to embed (max 100)
+- `inputs` (str | List[str] | EmbeddingInputData | List[EmbeddingInputData]): Text or list of texts/EmbeddingInputData to embed (max 100)
 - `model` (str, optional): Model name (default: "public")
 - `language` (str, optional): Language for lexeme extraction (default: "english")
 - `semantic_weight` (float, optional): Balance between term (0.0) and semantic (1.0) (default: 0.5)
@@ -153,6 +178,11 @@ Main client class for synchronous API calls.
 Async client class for asynchronous API calls. Same interface as `NeuraLexClient` but all methods are async.
 
 ### Models
+
+#### `EmbeddingInputData`
+
+- `text` (str): Text to embed (required)
+- `embedding` (List[float] | None): Pre-computed embedding vector (optional, for BYOE mode)
 
 #### `EmbeddingResponse`
 

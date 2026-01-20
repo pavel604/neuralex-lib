@@ -2,7 +2,12 @@
  * Example usage of the NeuraLex TypeScript/JavaScript client library.
  */
 
-import { NeuraLexClient, AuthenticationError, APIError } from 'neuralex';
+import {
+  NeuraLexClient,
+  AuthenticationError,
+  APIError,
+  EmbeddingInputData,
+} from 'neuralex';
 
 async function basicExample() {
   console.log('=== Basic Example ===');
@@ -35,6 +40,28 @@ async function batchExample() {
     console.log(`\nText ${i + 1}: ${item.text}`);
     console.log(`Dimensions: ${item.embedding.length}`);
     console.log(`Tokens: ${item.usage.totalTokens}`);
+  });
+}
+
+async function byoeExample() {
+  console.log('\n=== BYOE Example ===');
+
+  const client = new NeuraLexClient({ apiKey: 'nlx_your_api_key' });
+
+  // Simulate a pre-computed embedding (1024 dimensions)
+  const precomputedEmbedding = new Array(1024).fill(0.1);
+
+  // Create input with your own embedding
+  const inputs: EmbeddingInputData[] = [
+    { text: 'hello world', embedding: precomputedEmbedding },
+    { text: 'no embedding provided' }, // Will use server-side embedding
+  ];
+
+  const response = await client.embed(inputs);
+
+  response.payload.forEach((item) => {
+    console.log(`Text: ${item.text}`);
+    console.log(`Embedding dimensions: ${item.embedding.length}`);
   });
 }
 
